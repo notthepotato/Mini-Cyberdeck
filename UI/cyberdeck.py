@@ -1416,6 +1416,8 @@ class Kit:
         self.n_ok = 0
         self.installing = False
         self.install_log = collections.deque(maxlen=600)
+        self._proc = None
+        self._cancel = False
 
     def start(self):
         if self.scanning:
@@ -1445,6 +1447,8 @@ class Kit:
                 out.append(r["pkg"])
         return out
 
+    OVERALL_TIMEOUT = 1800        # 30 min hard cap on the whole install
+
     def install_all(self):
         if self.installing:
             return
@@ -1453,14 +1457,55 @@ class Kit:
             self.install_log.append(("all tools already installed", "ok"))
             return
         self.installing = True
+        self._proc = None
+        self._cancel = False
         threading.Thread(target=self._install, args=(pkgs,), daemon=True).start()
+
+    def cancel_install(self):
+        self._cancel = True
+        p = self._proc
+        if p and p.poll() is None:
+            try:
+                os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+            except OSError:
+                pass
+            self._ilog("cancelling…", "err")
 
     def _ilog(self, text, kind="out"):
         self.install_log.append((clean_line(text), kind))
 
+    def _run_apt(self, args, label, env):
+        self._ilog(f"$ {label}", "cmd")
+        try:
+            p = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT, text=True, errors="replace",
+                                 bufsize=1, env=env, start_new_session=True)
+        except (OSError, subprocess.SubprocessError) as e:
+            self._ilog(f"{label} failed to start: {e}", "err")
+            return False
+        self._proc = p
+        watchdog = threading.Timer(self.OVERALL_TIMEOUT, self.cancel_install)
+        watchdog.daemon = True
+        watchdog.start()
+        try:
+            for line in p.stdout:
+                self._ilog(line)
+            rc = p.wait()
+        finally:
+            watchdog.cancel()
+            self._proc = None
+        if self._cancel:
+            self._ilog(f"[{label} cancelled]", "err")
+            return False
+        if rc != 0:
+            self._ilog(f"[{label} exited {rc}]", "err")
+            return False
+        return True
+
     def _install(self, pkgs):
         try:
             self._ilog(f"installing {len(pkgs)} package(s): {' '.join(pkgs)}", "sys")
+            self._ilog("this can take several minutes — [I] cancels", "sys")
             self.log.add(f"kit: installing {len(pkgs)} package(s)", "info")
             try:
                 chk = subprocess.run(["sudo", "-n", "true"], capture_output=True, timeout=10)
@@ -1473,33 +1518,27 @@ class Kit:
                 self._ilog("sudo apt install " + " ".join(pkgs), "cmd")
                 self.log.add("kit: install needs a terminal (no passwordless sudo)", "warn")
                 return
+            # -o DPkg::Lock::Timeout makes apt wait a bounded time for the lock
+            # (held by the daily apt timer / unattended-upgrades) instead of hanging.
             env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
-            ok = True
-            for args, label in ((["sudo", "-n", "apt-get", "update"], "apt-get update"),
-                                (["sudo", "-n", "apt-get", "install", "-y"] + pkgs, "apt-get install")):
-                self._ilog(f"$ {label}", "cmd")
-                try:
-                    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                         text=True, errors="replace", bufsize=1, env=env)
-                    for line in p.stdout:
-                        self._ilog(line)
-                    rc = p.wait()
-                except (OSError, subprocess.SubprocessError) as e:
-                    self._ilog(f"{label} failed: {e}", "err")
-                    ok = False
-                    break
-                if rc != 0:
-                    self._ilog(f"[{label} exited {rc}]", "err")
-                    ok = False
-                    break
+            base = ["sudo", "-n", "apt-get", "-y", "-o", "DPkg::Lock::Timeout=120"]
+            ok = (self._run_apt(base + ["update"], "apt-get update", env)
+                  and not self._cancel
+                  and self._run_apt(base + ["install", "--no-install-recommends"] + pkgs,
+                                    "apt-get install", env))
             self.refresh()
             if ok:
                 self._ilog(f"done — {self.n_ok}/{len(KIT_TOOLS)} tools now installed", "ok")
                 self.log.add(f"kit: install finished, {self.n_ok}/{len(KIT_TOOLS)} ready", "ok")
+            elif self._cancel:
+                self._ilog("install cancelled", "err")
+                self.log.add("kit: install cancelled", "warn")
             else:
+                self._ilog("install did not complete — see lines above", "err")
                 self.log.add("kit: install did not complete (see KIT log)", "warn")
         finally:
             self.installing = False
+            self._proc = None
 
 
 PENTEST_PHASES = [
@@ -1842,13 +1881,22 @@ def init_colors():
 
 
 class Painter:
-    def __init__(self, scr, C):
+    def __init__(self, scr, C, margin=0):
         self.s = scr
         self.C = C
-        self.h, self.w = scr.getmaxyx()
+        self.margin = max(0, margin)
+        self.sync()
 
     def sync(self):
-        self.h, self.w = self.s.getmaxyx()
+        # Inset the whole UI by `margin` cells on every side so nothing is drawn
+        # in the border a display may crop (HDMI overscan on small panels).
+        H, W = self.s.getmaxyx()
+        m = self.margin
+        if 2 * m >= min(H, W):          # margin too big for this screen; ignore it
+            m = 0
+        self.oy = self.ox = m
+        self.h = H - 2 * m
+        self.w = W - 2 * m
 
     def put(self, y, x, text, attr=0):
         if y < 0 or y >= self.h or x >= self.w or not text:
@@ -1860,7 +1908,7 @@ class Painter:
         if not text:
             return
         try:
-            self.s.addstr(y, x, text, attr)
+            self.s.addstr(y + self.oy, x + self.ox, text, attr)
         except curses.error:
             pass
 
@@ -1988,7 +2036,7 @@ class App:
             scr.bkgd(" ", self.C["txt"])
         except curses.error:
             pass
-        self.P = Painter(scr, self.C)
+        self.P = Painter(scr, self.C, margin=max(0, getattr(args, "margin", 0)))
         self.log = EventLog()
         self.sys = SysMon()
         self.tach = Tach(args.pin, args.ppr, args.sim, args.debounce)
@@ -2006,6 +2054,7 @@ class App:
         self.pentest_mode = 0
         self.pt_hits = []
         self._kit_arm = False
+        self._power_err = ""
 
         self.page = 0
         self.running = True
@@ -2212,11 +2261,13 @@ class App:
             return
         if self.overlay == "power":
             low = k.lower() if isinstance(k, str) else ""
-            self.overlay = None
             if low == "r":
                 self.power("reboot")
             elif low == "s":
                 self.power("poweroff")
+            else:
+                self.overlay = None
+                self._power_err = ""
             return
         if self.overlay:
             self.overlay = None
@@ -2318,7 +2369,10 @@ class App:
             self.kit.start()
 
     def _kit_install(self):
-        if self.kit.installing or not self.kit.rows:
+        if self.kit.installing:            # pressing I while it runs cancels it
+            self.kit.cancel_install()
+            return
+        if not self.kit.rows:
             return
         if not self.kit.missing_packages():
             self._kit_arm = False
@@ -2442,13 +2496,32 @@ class App:
                     self.page = i
 
     def power(self, action):
+        """Reboot / shut down, trying the ways that work without a password:
+        systemctl via polkit first (works for an active local session), then
+        passwordless sudo. Surfaces the reason in the overlay if none work."""
         self.log.add(f"power: {action} requested", "warn")
-        try:
-            r = subprocess.run(["sudo", "-n", "systemctl", action], capture_output=True, text=True, timeout=15)
-            if r.returncode != 0:
-                self.log.add(f"power {action} failed: {(r.stderr or r.stdout).strip()[:80]}", "crit")
-        except (OSError, subprocess.SubprocessError) as e:
-            self.log.add(f"power {action} failed: {e}", "crit")
+        self._power_err = ""
+        attempts = [
+            ["systemctl", action],              # polkit lets the local session do this
+            ["sudo", "-n", "systemctl", action],
+            ["sudo", "-n", action],             # /sbin/reboot | /sbin/poweroff
+        ]
+        last = "no method available"
+        for args in attempts:
+            try:
+                r = subprocess.run(args, capture_output=True, text=True, timeout=20)
+            except (OSError, subprocess.SubprocessError) as e:
+                last = str(e)
+                continue
+            if r.returncode == 0:
+                self.log.add(f"power: {action} accepted ({args[0]})", "ok")
+                self.overlay = None
+                return                          # the machine is going down now
+            last = (r.stderr or r.stdout).strip().splitlines()[-1] if (r.stderr or r.stdout).strip() else f"exit {r.returncode}"
+            self.log.add(f"power: '{' '.join(args)}' failed: {clip(last, 80)}", "warn")
+        self._power_err = f"{action} failed: {clip(last, 60)}"
+        self.log.add(f"power: {action} could not run — try 'sudo systemctl {action}' in a terminal", "crit")
+        self.overlay = "power"                  # keep the menu open to show the error
 
     # ---- frame --------------------------------------------------------------
     def draw(self):
@@ -3267,7 +3340,7 @@ class App:
             K.start()
         missing = K.missing_packages()
         if K.installing:
-            tag, ta = f"INSTALLING {self._spin()}", C["warn"] | BOLD
+            tag, ta = f"INSTALLING {self._spin()} · [I] CANCEL", C["warn"] | BOLD
         elif self._kit_arm:
             tag, ta = f"INSTALL {len(missing)} PKG? PRESS I", C["crit"] | BOLD
         elif K.done:
@@ -3456,14 +3529,18 @@ class App:
 
     def draw_power(self):
         C = self.C
-        self.panel("POWER", [
+        lines = [
             ("", 0),
             ("[R]  REBOOT", C["warn"] | BOLD),
             ("[S]  SHUT DOWN", C["crit"] | BOLD),
             ("any other key cancels", C["dim"]),
-            ("", 0),
-            ("runs: sudo -n systemctl reboot|poweroff", C["dim"]),
-        ], attr=C["crit"])
+        ]
+        if self._power_err:
+            lines += [("", 0), ("! " + self._power_err, C["crit"] | BOLD),
+                      ("open TERM and run: sudo systemctl reboot", C["warn"])]
+        else:
+            lines += [("", 0), ("tries systemctl, then sudo", C["dim"])]
+        self.panel("POWER", lines, attr=C["crit"])
 
     def draw_alarm(self):
         C = self.C
@@ -3860,6 +3937,8 @@ def cli():
     p.add_argument("--sim", action="store_true", help="simulate a fan instead of reading GPIO")
     p.add_argument("--no-boot", action="store_true", help="skip the startup animation and both press-Enter screens")
     p.add_argument("--no-mouse", action="store_true", help="don't capture mouse/touch (keeps terminal text selection)")
+    p.add_argument("--margin", type=int, default=0, metavar="CELLS",
+                   help="inset the UI by N cells on every side, for displays that crop the edge (overscan)")
     p.add_argument("--saver", type=float, default=0, metavar="MIN", help="start matrix screensaver after MIN idle minutes")
     p.add_argument("--timer", type=int, default=5, metavar="MIN", help="default countdown length in minutes")
     p.add_argument("--temp-warn", type=float, default=70.0, help="CPU temp warning threshold °C")

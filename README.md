@@ -3,6 +3,26 @@
 A neon terminal command deck for your Raspberry Pi, with a live tachometer
 for the Noctua fan on GPIO2.
 
+![CYBERDECK title screen](docs/00_title.png)
+
+## Screenshots
+
+| Dashboard | Fan tachometer |
+|---|---|
+| ![Dashboard](docs/01_dashboard.png) | ![Fan tachometer](docs/02_fan.png) |
+
+| Pen-test · LAN recon | Pen-test · wireless survey |
+|---|---|
+| ![LAN recon](docs/03_recon.png) | ![Wireless survey](docs/04_wireless.png) |
+
+| Pen-test · kit inventory | Serial console |
+|---|---|
+| ![Kit inventory](docs/05_kit.png) | ![Serial console](docs/06_serial.png) |
+
+| Tools (stopwatch · timer · notes · keygen) | |
+|---|---|
+| ![Tools](docs/07_tools.png) | |
+
 ## Run it
 
 Open a terminal and run:
@@ -42,9 +62,26 @@ screen, with no taskbar or window borders.
 * **Q** quits to a text prompt. Type `cyberdeck` to start it again,
   `desktop` to open the normal desktop, or `sudo reboot`.
 * **Text size:** change `FONT_SIZE` near the top of `launch-cyberdeck.sh`
-  (default 12; bigger number = bigger text).
+  (default 11; bigger number = bigger text, fewer columns).
 * **SSH** logins are left alone and get a normal shell.
 * **Undo:** `bash ~/Documents/UI/uninstall-autostart.sh` boots to the desktop again.
+
+### Small screens & text cut off at the edges (e.g. a 5" 800×480 panel)
+
+Many small HDMI displays crop the outer edge of the picture ("overscan"), so
+the header and footer can run off the screen even though the app is drawing
+them. The kiosk launcher leaves a 2-cell safe border by default to avoid this.
+If text is still cut off at the edges, increase the border:
+
+    CYBERDECK_MARGIN=4 cyberdeck        # bigger safe border, try 3–6
+
+Set it permanently by changing `MARGIN` near the top of `launch-cyberdeck.sh`.
+To remove the cropping properly instead, turn off overscan for your display in
+`sudo raspi-config` → Display Options → Underscan (or set `disable_overscan=1`
+in `/boot/firmware/config.txt`), then set `CYBERDECK_MARGIN=0`.
+
+Running it by hand (not via the kiosk) takes the same flag:
+`python3 cyberdeck.py --margin 3`.
 
 How it works: the Pi boots to the text console and logs in automatically.
 Your login profile then starts `launch-cyberdeck.sh`, which runs CYBERDECK
@@ -154,3 +191,11 @@ the CPU passes 80°C, or the Pi reports under-voltage.
 * **RPM jumps around or reads double**: try `--debounce 100`.
 * **Boxes look like question marks**: your terminal font lacks the
   block characters. The default Raspberry Pi OS terminal is fine.
+* **Text cut off at the edges**: display overscan — raise `CYBERDECK_MARGIN`
+  (see "Small screens" above).
+* **Power menu (P) does nothing**: it needs permission to reboot/shut down.
+  It tries `systemctl` then `sudo`; if both are blocked it shows the error in
+  the menu. Run `sudo systemctl reboot` from the TERM tab to confirm it works,
+  or enable passwordless sudo for the first user.
+* **"Install all" in KIT sits on "working"**: apt can be slow or waiting on the
+  package lock; press **I** again to cancel. It also gives up after 30 minutes.
