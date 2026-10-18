@@ -43,7 +43,7 @@ links are the exact items used. Quantities and part names are easy to edit.
 | 4 | Cooling fan | Noctua NF-A4x10 5V, 40 mm, 3-pin (with tach) | 1 |  | [Amazon](https://www.amazon.com/dp/B00NEMGCIA) |
 | 5 | Keyboard | K808 mini Bluetooth keyboard + touchpad, backlit | 1 |  | [Amazon](https://www.amazon.com/dp/B0797Q97FK) |
 | 6 | Power switch | Nilight 90014E rocker toggle, 12 V 20 A (5-pack) | 1 |  | [Amazon](https://www.amazon.com/dp/B07QKFD7Z7) |
-| 7 | Enclosure | 3D-printed case | 1 |  | — |
+| 7 | Case | MEIJIA IP67 waterproof hard case, 8.12×6.56×3.56 in, foam insert | 1 |  | [Amazon](https://www.amazon.com/dp/B07S1K184L) |
 
 ### Power — battery → buck → GPIO pins
 
@@ -78,6 +78,7 @@ The Pi is powered through its **5 V GPIO pins**, not the USB-C port.
 | 17 | Heat-set inserts | M3 | — |  | brass, for 3D prints |
 | 18 | Screws | M2.5 | — |  | assorted lengths |
 | 19 | Heat-set inserts | M2.5 | — |  | brass, for 3D prints |
+| 20 | 3D-printed parts | mounting plates / bezel / internal frame | 1 set |  | fit inside the hard case |
 
 **Plug-in devices (optional, not part of the deck):** the SERIAL tab talks to a
 Bus Pirate, M5Stack Cardputer, Arduino/ESP32 or any USB-UART adapter; the PTEST
