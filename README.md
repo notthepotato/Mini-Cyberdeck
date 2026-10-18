@@ -1,9 +1,14 @@
-# CYBERDECK
+# Mini-Cyberdeck
 
-A neon terminal command deck for your Raspberry Pi, with a live tachometer
-for the Noctua fan on GPIO2.
+A neon, keyboard-driven terminal command deck for a Raspberry Pi: a live
+Noctua fan tachometer on GPIO2, system dashboards, a recon & reference
+console, a USB serial terminal, and a pile of tools — all in one TUI that
+runs on anything from a 40×12 window to a full-screen monitor. On screen it
+boots up as **CYBERDECK**.
 
-![CYBERDECK title screen](docs/00_title.png)
+Repo: <https://github.com/notthepotato/Mini-Cyberdeck>
+
+![Mini-Cyberdeck title screen](docs/00_title.png)
 
 ## Screenshots
 
@@ -23,7 +28,71 @@ for the Noctua fan on GPIO2.
 |---|---|
 | ![Tools](docs/07_tools.png) | |
 
+## Bill of materials (BOM)
+
+The parts in this build. **Fill in the Price column with what you paid** — the
+links are the exact items used. Quantities and part names are easy to edit.
+
+### Core build
+
+| # | Component | Part / model | Qty | Price | Link |
+|---|-----------|--------------|-----|-------|------|
+| 1 | Single-board computer | Raspberry Pi 5 | 1 |  | — |
+| 2 | microSD card | 32 GB+ A2, Raspberry Pi OS 64-bit | 1 |  | — |
+| 3 | Display | Hosyond 5" IPS DSI touchscreen, 800×480 (driver-free) | 1 |  | [Amazon](https://www.amazon.com/dp/B0CXTFN8K9) |
+| 4 | Cooling fan | Noctua NF-A4x10 5V, 40 mm, 3-pin (with tach) | 1 |  | [Amazon](https://www.amazon.com/dp/B00NEMGCIA) |
+| 5 | Keyboard | K808 mini Bluetooth keyboard + touchpad, backlit | 1 |  | [Amazon](https://www.amazon.com/dp/B0797Q97FK) |
+| 6 | Power switch | Nilight 90014E rocker toggle, 12 V 20 A (5-pack) | 1 |  | [Amazon](https://www.amazon.com/dp/B07QKFD7Z7) |
+| 7 | Enclosure | 3D-printed case | 1 |  | — |
+
+### Power — battery → buck → GPIO pins
+
+The Pi is powered through its **5 V GPIO pins**, not the USB-C port.
+
+| # | Component | Part / model | Qty | Price | Link |
+|---|-----------|--------------|-----|-------|------|
+| 8 | Battery | 12 V cell | 2 |  | — |
+| 9 | Buck converter | step-down to 5 V (size for a Pi 5, ~5 A) | 1 |  | — |
+
+### USB & cables
+
+| # | Component | Part / model | Qty | Price | Link |
+|---|-----------|--------------|-----|-------|------|
+| 10 | USB-C PD cable | DbillionDa 90°, 60 W, 3.3 ft | 1 |  | [Amazon](https://www.amazon.com/dp/B0CCJLS4R5) |
+| 11 | USB-C short cable | aceyoon 90°, 0.6 ft (3-pack) | 1 |  | [Amazon](https://www.amazon.com/dp/B096VYVR17) |
+| 12 | USB hub board | xiwai USB-C 1→3 ports PCBA | 1 |  | [Amazon](https://www.amazon.com/dp/B0F2MK23DW) |
+| 13 | USB hub board | xiwai USB-C / 4-pin 1→7 ports PCBA | 1 |  | [Amazon](https://www.amazon.com/dp/B0F2MM5F53) |
+
+### Fan tach circuit
+
+| # | Component | Part / model | Qty | Price | Link |
+|---|-----------|--------------|-----|-------|------|
+| 14 | Resistor | 100 kΩ — tach pull-up to 3V3 | 1 |  | — |
+| 15 | Jumper wires | female–female Dupont | few |  | — |
+
+### Fasteners & enclosure hardware
+
+| # | Component | Part / model | Qty | Price | Link |
+|---|-----------|--------------|-----|-------|------|
+| 16 | Screws | M3 | — |  | assorted lengths |
+| 17 | Heat-set inserts | M3 | — |  | brass, for 3D prints |
+| 18 | Screws | M2.5 | — |  | assorted lengths |
+| 19 | Heat-set inserts | M2.5 | — |  | brass, for 3D prints |
+
+**Plug-in devices (optional, not part of the deck):** the SERIAL tab talks to a
+Bus Pirate, M5Stack Cardputer, Arduino/ESP32 or any USB-UART adapter; the PTEST
+field kit can use a monitor-mode USB Wi-Fi adapter, a USB-Ethernet adapter, a
+logic analyzer or an RTL-SDR.
+
+<!-- Add rows as you buy parts; fill in the Price column and a running total. -->
+
 ## Run it
+
+On the Pi this lives in `~/Documents/UI`; a fresh clone works too:
+
+    git clone https://github.com/notthepotato/Mini-Cyberdeck.git
+    cd Mini-Cyberdeck
+    python3 cyberdeck.py
 
 Open a terminal and run:
 
@@ -68,20 +137,21 @@ screen, with no taskbar or window borders.
 
 ### Small screens & text cut off at the edges (e.g. a 5" 800×480 panel)
 
-Many small HDMI displays crop the outer edge of the picture ("overscan"), so
-the header and footer can run off the screen even though the app is drawing
-them. The kiosk launcher leaves a 2-cell safe border by default to avoid this.
-If text is still cut off at the edges, increase the border:
+Some small panels don't show the very outer edge of the picture, so the header
+and footer can run off-screen even though the app is drawing them. The kiosk
+launcher leaves a 2-cell safe border by default. If text is still cut off at the
+edges, increase it:
 
     CYBERDECK_MARGIN=4 cyberdeck        # bigger safe border, try 3–6
 
-Set it permanently by changing `MARGIN` near the top of `launch-cyberdeck.sh`.
-To remove the cropping properly instead, turn off overscan for your display in
-`sudo raspi-config` → Display Options → Underscan (or set `disable_overscan=1`
-in `/boot/firmware/config.txt`), then set `CYBERDECK_MARGIN=0`.
+Set it permanently by changing `MARGIN` near the top of `launch-cyberdeck.sh`,
+or run it by hand with `python3 cyberdeck.py --margin 3`.
 
-Running it by hand (not via the kiosk) takes the same flag:
-`python3 cyberdeck.py --margin 3`.
+On an **HDMI** display this is usually overscan, which you can instead turn off
+in `sudo raspi-config` → Display Options (or `disable_overscan=1` in
+`/boot/firmware/config.txt`), then set `CYBERDECK_MARGIN=0`. The 5" **DSI**
+panel in this build is driver-free and pixel-exact, so the margin is the fix
+there.
 
 How it works: the Pi boots to the text console and logs in automatically.
 Your login profile then starts `launch-cyberdeck.sh`, which runs CYBERDECK
@@ -92,20 +162,34 @@ installed, it runs on the plain text console instead, with fewer colours.
 The Claude desktop app only runs inside the desktop. While you're in
 CYBERDECK mode, type `desktop` first if you want Claude to work with your Pi.
 
-## Fan wiring (Noctua)
+## Wiring & power
 
-| Fan wire        | Pi pin                               |
-|-----------------|--------------------------------------|
-| Green (tach)    | GPIO2 = physical pin 3               |
-| Black (ground)  | any GND, e.g. physical pin 6         |
-| Yellow (power)  | 5V (pin 2/4) for 5V fans             |
+### Power (through the GPIO pins)
 
-* GPIO2 has a 1.8k pull-up to 3.3V built into the Pi, so the tach wire can go
-  straight to the pin. No resistor needed, and it never sees more than 3.3V.
+This build runs the Pi from a battery, not the USB-C port:
+
+    2 × 12 V cells  →  buck converter (set to 5 V)  →  Pi 5 V pins (2 or 4) + GND
+
+A rocker switch breaks the battery line, and the 5 V Noctua fan runs off the
+same 5 V rail. Feeding 5 V straight into the GPIO header skips the Pi's own
+input protection, so set the buck to a clean 5.0–5.1 V **before** connecting it,
+and make sure it can supply the Pi's draw (a Pi 5 can pull up to ~5 A).
+
+### Fan tachometer (Noctua, 3-pin)
+
+| Fan wire        | Goes to                        |
+|-----------------|--------------------------------|
+| Green (tach)    | GPIO2 = physical pin 3         |
+| Black (ground)  | any GND, e.g. physical pin 6   |
+| Yellow (+5 V)   | the 5 V rail (pin 2 or 4)      |
+
+* The tach line is pulled up to 3V3 — this build uses a **100 kΩ** resistor.
+  GPIO2 also has a ~1.8 kΩ pull-up on the Pi itself, so it's held high either
+  way, and never sees more than 3.3 V.
 * GPIO2 is also the I2C data pin. Keep I2C **off**
   (`sudo raspi-config` → Interface Options → I2C → No), or the pin will be busy.
 * Noctua fans give 2 pulses per revolution (the default `--ppr 2`).
-* A 12V Noctua on a 5V supply will spin slowly or not at all. That's normal.
+* If the RPM reads high or jumps around, add `--debounce 100`.
 
 ## Pages
 
@@ -182,6 +266,8 @@ the CPU passes 80°C, or the Pi reports under-voltage.
     --debounce 100     filter electrical noise if RPM reads too high
     --saver 10         matrix screensaver after 10 idle minutes
     --pin 18           tach on a different GPIO
+    --baud 115200      default baud for the SERIAL tab
+    --margin 3         inset the UI by N cells (for displays that crop the edge)
     --no-mouse         keep normal text selection in the terminal
 
 ## Troubleshooting
@@ -191,8 +277,8 @@ the CPU passes 80°C, or the Pi reports under-voltage.
 * **RPM jumps around or reads double**: try `--debounce 100`.
 * **Boxes look like question marks**: your terminal font lacks the
   block characters. The default Raspberry Pi OS terminal is fine.
-* **Text cut off at the edges**: display overscan — raise `CYBERDECK_MARGIN`
-  (see "Small screens" above).
+* **Text cut off at the edges**: the panel isn't showing the outer edge — raise
+  `CYBERDECK_MARGIN` (see "Small screens" above).
 * **Power menu (P) does nothing**: it needs permission to reboot/shut down.
   It tries `systemctl` then `sudo`; if both are blocked it shows the error in
   the menu. Run `sudo systemctl reboot` from the TERM tab to confirm it works,
