@@ -26,7 +26,17 @@ Repo: <https://github.com/notthepotato/Mini-Cyberdeck>
 
 | Tools (stopwatch · timer · notes · keygen) | |
 |---|---|
-| ![Tools](docs/07_tools.png) | |
+| ![Tools](docs/IMG_3489.j) | |
+
+## Pictures 
+
+
+|---|---|
+| ![](docs/IMG_3489.jpg) | ![](docs/IMG_3490.jpg) |
+|---|---|
+| ![](docs/IMG_3486.jpg) | ![](docs/IMG_3487.jpg) |
+|---|---|
+| ![](docs/IMG_3488.jpg) | |
 
 ## Bill of materials (BOM)
 
