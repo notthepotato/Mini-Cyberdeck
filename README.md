@@ -58,7 +58,7 @@ The Pi is powered through its **5 V GPIO pins**, not the USB-C port.
 | # | Component | Part / model | Qty | Price | Link |
 |---|-----------|--------------|-----|-------|------|
 | 8 | Battery | 12 V cell | 2 |  | — |
-| 9 | Buck converter | reg24d (D36V50F5) step-down to 5 V (size for a Pi 5, ~5 A) | 1 | $39.95 | [Pololu](https://www.pololu.com/product/4091) |
+| 9 | Buck converter | reg24d (D36V50F5) step-down to 5V, 5.5V continuous (size for a Pi 5, ~5 A) | 1 | $39.95 | [Pololu](https://www.pololu.com/product/4091) |
 
 ### USB & cables
 
