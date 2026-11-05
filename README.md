@@ -45,11 +45,11 @@ links are the exact items used. Quantities and part names are easy to edit.
 |---|-----------|--------------|-----|-------|------|
 | 1 | Single-board computer | Raspberry Pi 5 | 1 |  | — |
 | 2 | microSD card | 32 GB+ A2, Raspberry Pi OS 64-bit | 1 |  | — |
-| 3 | Display | Hosyond 5" IPS DSI touchscreen, 800×480 (driver-free) | 1 |  | [Amazon](https://www.amazon.com/dp/B0CXTFN8K9) |
-| 4 | Cooling fan | Noctua NF-A4x10 5V, 40 mm, 3-pin (with tach) | 1 |  | [Amazon](https://www.amazon.com/dp/B00NEMGCIA) |
-| 5 | Keyboard | K808 mini Bluetooth keyboard + touchpad, backlit | 1 |  | [Amazon](https://www.amazon.com/dp/B0797Q97FK) |
-| 6 | Power switch | Nilight 90014E rocker toggle, 12 V 20 A (5-pack) | 1 |  | [Amazon](https://www.amazon.com/dp/B07QKFD7Z7) |
-| 7 | Case | MEIJIA IP67 waterproof hard case, 8.12×6.56×3.56 in, foam insert | 1 |  | [Amazon](https://www.amazon.com/dp/B07S1K184L) |
+| 3 | Display | Hosyond 5" IPS DSI touchscreen, 800×480 (driver-free) | 1 | $34.99 | [Amazon](https://www.amazon.com/dp/B0CXTFN8K9) |
+| 4 | Cooling fan | Noctua NF-A4x10 5V, 40 mm, 3-pin (with tach) | 1 | $15.95 | [Amazon](https://www.amazon.com/dp/B00NEMGCIA) |
+| 5 | Keyboard | K808 mini Bluetooth keyboard + touchpad, backlit | 1 | $19.99 | [Amazon](https://www.amazon.com/dp/B0797Q97FK) |
+| 6 | Power switch | Nilight 90014E rocker toggle, 12 V 20 A (5-pack) | 1 | $11.99 | [Amazon](https://www.amazon.com/dp/B07QKFD7Z7) |
+| 7 | Case | MEIJIA IP67 waterproof hard case, 8.12×6.56×3.56 in, foam insert | 1 | $23.99 | [Amazon](https://www.amazon.com/dp/B07S1K184L) |
 
 ### Power — battery → buck → GPIO pins
 
@@ -58,7 +58,7 @@ The Pi is powered through its **5 V GPIO pins**, not the USB-C port.
 | # | Component | Part / model | Qty | Price | Link |
 |---|-----------|--------------|-----|-------|------|
 | 8 | Battery | 12 V cell | 2 |  | — |
-| 9 | Buck converter | step-down to 5 V (size for a Pi 5, ~5 A) | 1 |  | — |
+| 9 | Buck converter | reg24d (D36V50F5) step-down to 5 V (size for a Pi 5, ~5 A) | 1 | $39.95 | [Pololu](https://www.pololu.com/product/4091) |
 
 ### USB & cables
 
