@@ -64,10 +64,10 @@ The Pi is powered through its **5 V GPIO pins**, not the USB-C port.
 
 | # | Component | Part / model | Qty | Price | Link |
 |---|-----------|--------------|-----|-------|------|
-| 10 | USB-C PD cable | DbillionDa 90°, 60 W, 3.3 ft | 1 |  | [Amazon](https://www.amazon.com/dp/B0CCJLS4R5) |
-| 11 | USB-C short cable | aceyoon 90°, 0.6 ft (3-pack) | 1 |  | [Amazon](https://www.amazon.com/dp/B096VYVR17) |
-| 12 | USB hub board | xiwai USB-C 1→3 ports PCBA | 1 |  | [Amazon](https://www.amazon.com/dp/B0F2MK23DW) |
-| 13 | USB hub board | xiwai USB-C / 4-pin 1→7 ports PCBA | 1 |  | [Amazon](https://www.amazon.com/dp/B0F2MM5F53) |
+| 10 | USB-C PD cable | DbillionDa 90°, 60 W, 3.3 ft | 1 | $9.99 | [Amazon](https://www.amazon.com/dp/B0CCJLS4R5) |
+| 11 | USB-C short cable | aceyoon 90°, 0.6 ft (3-pack) | 1 | $8.49 | [Amazon](https://www.amazon.com/dp/B096VYVR17) |
+| 12 | USB hub board | xiwai USB-C 1→3 ports PCBA | 1 | $12.99 | [Amazon](https://www.amazon.com/dp/B0F2MK23DW) |
+| 13 | USB hub board | xiwai USB-C / 4-pin 1→7 ports PCBA | 1 | $12.99 | [Amazon](https://www.amazon.com/dp/B0F2MM5F53) |
 
 ### Fan tach circuit
 
