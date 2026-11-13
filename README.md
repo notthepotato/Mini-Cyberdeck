@@ -6,7 +6,7 @@ console, a USB serial terminal, and a pile of tools — all in one TUI that
 runs on anything from a 40×12 window to a full-screen monitor. On screen it
 boots up as **CYBERDECK**.
 
-Repo: <https://github.com/notthepotato/Mini-Cyberdeck>
+Printables: <https://www.printables.com/model/1882946-mini-cyber-deck>
 
 ![Mini-Cyberdeck title screen](docs/00_title.png)
 
